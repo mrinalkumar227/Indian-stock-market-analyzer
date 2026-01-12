@@ -8,20 +8,16 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 
+from nse_stocks import (
+    NIFTY_50,
+    get_all_indices,
+    get_stocks_by_index,
+    get_all_nse_stocks,
+    get_index_count
+)
 
-# Nifty 50 Stock Symbols
-NIFTY_50_STOCKS = [
-    "ADANIENT", "ADANIPORTS", "APOLLOHOSP", "ASIANPAINT", "AXISBANK",
-    "BAJAJ-AUTO", "BAJFINANCE", "BAJAJFINSV", "BPCL", "BHARTIARTL",
-    "BRITANNIA", "CIPLA", "COALINDIA", "DIVISLAB", "DRREDDY",
-    "EICHERMOT", "GRASIM", "HCLTECH", "HDFCBANK", "HDFCLIFE",
-    "HEROMOTOCO", "HINDALCO", "HINDUNILVR", "ICICIBANK", "ITC",
-    "INDUSINDBK", "INFY", "JSWSTEEL", "KOTAKBANK", "LT",
-    "M&M", "MARUTI", "NTPC", "NESTLEIND", "ONGC",
-    "POWERGRID", "RELIANCE", "SBILIFE", "SHRIRAMFIN", "SBIN",
-    "SUNPHARMA", "TCS", "TATACONSUM", "TATAMOTORS", "TATASTEEL",
-    "TECHM", "TITAN", "ULTRACEMCO", "WIPRO", "LTIM"
-]
+# Backward compatibility alias
+NIFTY_50_STOCKS = NIFTY_50
 
 
 def fetch_stock_data(symbol: str, period: str = "1y") -> tuple[pd.DataFrame | None, str | None]:
