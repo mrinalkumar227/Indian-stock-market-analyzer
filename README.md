@@ -1,4 +1,3 @@
-# Indian-stock-market-analyzer# NSE Stock Market Analyzer 📈
 
 A Python-based stock analysis dashboard for Indian stocks (NSE) with technical indicators and algorithmic trading signals.
 
