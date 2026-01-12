@@ -1,0 +1,286 @@
+"""
+Comprehensive NSE Stock Lists Module
+Contains stock lists for major NSE indices and sectoral indices.
+"""
+
+# ==================== NIFTY 50 ====================
+NIFTY_50 = [
+    "ADANIENT", "ADANIPORTS", "APOLLOHOSP", "ASIANPAINT", "AXISBANK",
+    "BAJAJ-AUTO", "BAJFINANCE", "BAJAJFINSV", "BPCL", "BHARTIARTL",
+    "BRITANNIA", "CIPLA", "COALINDIA", "DIVISLAB", "DRREDDY",
+    "EICHERMOT", "GRASIM", "HCLTECH", "HDFCBANK", "HDFCLIFE",
+    "HEROMOTOCO", "HINDALCO", "HINDUNILVR", "ICICIBANK", "ITC",
+    "INDUSINDBK", "INFY", "JSWSTEEL", "KOTAKBANK", "LT",
+    "M&M", "MARUTI", "NTPC", "NESTLEIND", "ONGC",
+    "POWERGRID", "RELIANCE", "SBILIFE", "SHRIRAMFIN", "SBIN",
+    "SUNPHARMA", "TCS", "TATACONSUM", "TATAMOTORS", "TATASTEEL",
+    "TECHM", "TITAN", "ULTRACEMCO", "WIPRO", "LTIM"
+]
+
+# ==================== NIFTY NEXT 50 ====================
+NIFTY_NEXT_50 = [
+    "ABB", "ACC", "ADANIENSOL", "ADANIGREEN", "ADANIPOWER",
+    "AMBUJACEM", "ATGL", "AUROPHARMA", "BAJAJHLDNG", "BANKBARODA",
+    "BEL", "BERGEPAINT", "BOSCHLTD", "CANBK", "CHOLAFIN",
+    "COLPAL", "CONCOR", "DLF", "DABUR", "DMART",
+    "GODREJCP", "GAIL", "HAVELLS", "ICICIPRULI", "ICICIGI",
+    "INDUSTOWER", "IOC", "IRFC", "JINDALSTEL", "JIOFIN",
+    "LICI", "LODHA", "LUPIN", "MANKIND", "MARICO",
+    "MCDOWELL-N", "NHPC", "NMDC", "NAUKRI", "OFSS",
+    "PAYTM", "PIDILITIND", "PFC", "PNB", "RECLTD",
+    "SBICARD", "SRF", "SIEMENS", "TATAPOWER", "TORNTPHARM",
+    "TRENT", "VBL", "VEDL", "ZOMATO", "ZYDUSLIFE"
+]
+
+# ==================== NIFTY MIDCAP 100 ====================
+NIFTY_MIDCAP_100 = [
+    "ABCAPITAL", "ABFRL", "AIAENG", "ALKEM", "ANGELONE",
+    "APLLTD", "ASHOKLEY", "ASTRAL", "ATUL", "AUBANK",
+    "AUROPHARMA", "BALKRISIND", "BANDHANBNK", "BATAINDIA", "BHARATFORG",
+    "BIOCON", "BRIGADE", "BSE", "CANFINHOME", "CDSL",
+    "CENTRALBK", "CGPOWER", "CHAMBLFERT", "CROMPTON", "CUB",
+    "CUMMINSIND", "CYIENT", "DEEPAKNTR", "DELHIVERY", "DIXON",
+    "ELGIEQUIP", "EMAMILTD", "ESCORTS", "EXIDEIND", "FEDERALBNK",
+    "FLUOROCHEM", "GLENMARK", "GMRAIRPORT", "GNFC", "GODREJPROP",
+    "GRANULES", "GUJGASLTD", "HAL", "HDFCAMC", "HONAUT",
+    "IDFCFIRSTB", "IEX", "IIFL", "INDIANB", "INDHOTEL",
+    "IPCALAB", "IRB", "IRCTC", "JKCEMENT", "JSL",
+    "JSWENERGY", "JUBLFOOD", "KALYANKJIL", "KAJARIACER", "KEI",
+    "KPITTECH", "L&TFH", "LAURUSLABS", "LTF", "LICHSGFIN",
+    "LINDEINDIA", "LTTS", "M&MFIN", "MANYAVAR", "MAXHEALTH",
+    "MFSL", "MOTHERSON", "MPHASIS", "MRF", "MUTHOOTFIN",
+    "NAM-INDIA", "NATIONALUM", "NAVINFLUOR", "NHPC", "NCC",
+    "OBEROIRLTY", "OIL", "PAGEIND", "PERSISTENT", "PETRONET",
+    "POLYCAB", "POONAWALLA", "PRESTIGE", "PVRINOX", "RAMCOCEM",
+    "RELAXO", "SAIL", "SANOFI", "SCHAEFFLER", "SONACOMS",
+    "STAR", "SUNDARMFIN", "SUNDRMFAST", "SUNTV", "SUPREMEIND",
+    "SYNGENE", "TATACOMM", "TATAELXSI", "TATAINVEST", "TVSMOTOR",
+    "UBL", "UNIONBANK", "UPL", "VOLTAS", "YESBANK", "ZEEL"
+]
+
+# ==================== NIFTY SMALLCAP 100 ====================
+NIFTY_SMALLCAP_100 = [
+    "360ONE", "3MINDIA", "AAVAS", "AFFLE", "AJANTPHARM",
+    "AMBER", "ANANDRATHI", "APARINDS", "APTUS", "ARE&M",
+    "ASAHIINDIA", "BALAMINES", "BASF", "BAYERCROP", "BBOX",
+    "BDL", "BEML", "BIKAJI", "BLUESTRIND", "BLUEDART",
+    "BORORENEW", "CAMPUS", "CARBORUNIV", "CASTROLIND", "CEATLTD",
+    "CENTURYPLY", "CERA", "CHALET", "CLEAN", "COCHINSHIP",
+    "COFORGE", "CRAFTSMAN", "CREDITACC", "CYIENT", "DATAPATTNS",
+    "DCMSHRIRAM", "ECLERX", "EIDPARRY", "ELECON", "ENDURANCE",
+    "ENGINERSIN", "EQUITASBNK", "FINCABLES", "FINPIPE", "FIVESTAR",
+    "GALAXYSURF", "GESHIP", "GILLETTE", "GLAXO", "GMDCLTD",
+    "GPIL", "GRINDWELL", "GRSE", "GSFC", "GSPL",
+    "HAPPSTMNDS", "HATSUN", "HGS", "HINDCOPPER", "HINDZINC",
+    "HOMEFIRST", "IBREALEST", "IFBIND", "IIFLWAM", "INDIGOPNTS",
+    "INOXWIND", "INTELLECT", "IONEXCHANG", "ISEC", "ITI",
+    "JBCHEPHARM", "JBMA", "JKLAKSHMI", "JKPAPER", "JMFINANCIL",
+    "JSWHL", "JTEKTINDIA", "JUBLINGREA", "JUBLPHARMA", "JUSTDIAL",
+    "KARURVYSYA", "KAYNES", "KFINTECH", "KIRLOSBROS", "KIRLPNU",
+    "KPRMILL", "KSB", "LAXMIMACH", "LEMONTREE", "MAHABANK",
+    "MAHSEAMLES", "MANAPPURAM", "MAPMYINDIA", "MASTERTRUST", "MAZAGON",
+    "METROPOLIS", "MIDHANI", "MRPL", "NATCOPHARM", "NBCC",
+    "NFL", "OLECTRA", "ORIENTELEC", "PCBL", "PGHH",
+    "POLYMED", "PPLPHARMA", "PRINCEPIPE", "RADICO", "RAIN",
+    "RAJESHEXPO", "RALLIS", "RATNAMANI", "RAYMOND", "RBA",
+    "REDINGTON", "RITES", "RKFORGE", "ROUTE", "RPOWER",
+    "RVNL", "SAFARI", "SAREGAMA", "SHALBY", "SHARDAMOTR",
+    "SHYAMMETL", "SJVN", "SKFINDIA", "SOBHA", "SONATSOFTW",
+    "SPARC", "SJS", "SWSOLAR", "TANLA", "TASTYBITE",
+    "TECHNOE", "TEGA", "THERMAX", "TIINDIA", "TIMKEN",
+    "TRITURBINE", "UCOBANK", "UTIAMC", "VAIBHAVGBL", "VGUARD",
+    "VIJAYA", "VSTTILLERS", "VTL", "WELSPUNIND", "WESTLIFE",
+    "WHIRLPOOL", "WONDERLA", "WOCKPHARMA", "ZENSARTECH"
+]
+
+# ==================== SECTORAL INDICES ====================
+
+# Bank Nifty (Nifty Bank)
+NIFTY_BANK = [
+    "AUBANK", "AXISBANK", "BANDHANBNK", "BANKBARODA", "FEDERALBNK",
+    "HDFCBANK", "ICICIBANK", "IDFCFIRSTB", "INDUSINDBK", "KOTAKBANK",
+    "PNB", "SBIN"
+]
+
+# Nifty IT
+NIFTY_IT = [
+    "COFORGE", "HCLTECH", "INFY", "LTIM", "LTTS",
+    "MPHASIS", "PERSISTENT", "TCS", "TECHM", "WIPRO"
+]
+
+# Nifty Pharma
+NIFTY_PHARMA = [
+    "ABBOTINDIA", "AUROPHARMA", "BIOCON", "CIPLA", "DIVISLAB",
+    "DRREDDY", "GLENMARK", "GRANULES", "IPCALAB", "LAURUSLABS",
+    "LUPIN", "NATCOPHARM", "SUNPHARMA", "TORNTPHARM", "ZYDUSLIFE"
+]
+
+# Nifty Auto
+NIFTY_AUTO = [
+    "APOLLOTYRE", "ASHOKLEY", "BAJAJ-AUTO", "BALKRISIND", "BHARATFORG",
+    "BOSCHLTD", "EICHERMOT", "EXIDEIND", "HEROMOTOCO", "M&M",
+    "MARUTI", "MOTHERSON", "MRF", "TATAMOTORS", "TVSMOTOR"
+]
+
+# Nifty FMCG
+NIFTY_FMCG = [
+    "BRITANNIA", "COLPAL", "DABUR", "EMAMILTD", "GODREJCP",
+    "HINDUNILVR", "ITC", "MARICO", "NESTLEIND", "PGHH",
+    "RADICO", "TATACONSUM", "UBL", "UNITDSPR", "VBL"
+]
+
+# Nifty Energy
+NIFTY_ENERGY = [
+    "ADANIGREEN", "BPCL", "COALINDIA", "GAIL", "IOC",
+    "NTPC", "ONGC", "POWERGRID", "RELIANCE", "TATAPOWER"
+]
+
+# Nifty Metal
+NIFTY_METAL = [
+    "ADANIENT", "APLAPOLLO", "COALINDIA", "HINDALCO", "HINDCOPPER",
+    "HINDZINC", "JINDALSTEL", "JSWSTEEL", "NATIONALUM", "NMDC",
+    "RATNAMANI", "SAIL", "TATASTEEL", "VEDL", "WELCORP"
+]
+
+# Nifty Realty
+NIFTY_REALTY = [
+    "BRIGADE", "DLF", "GODREJPROP", "LODHA", "MAHLIFE",
+    "OBEROIRLTY", "PHOENIXLTD", "PRESTIGE", "RAYMOND", "SOBHA",
+    "SUNTECK", "SIGNATURE"
+]
+
+# Nifty PSU Banks
+NIFTY_PSU_BANK = [
+    "BANKBARODA", "BANKINDIA", "CANBK", "CENTRALBK", "INDIANB",
+    "IOB", "MAHABANK", "PNB", "SBIN", "UCOBANK", "UNIONBANK"
+]
+
+# Nifty Media
+NIFTY_MEDIA = [
+    "DISHTV", "HATHWAY", "NAZARA", "NETWORK18", "PVRINOX",
+    "SAREGAMA", "SUNTV", "TV18BRDCST", "TTML", "ZEEL", "ZEE"
+]
+
+# Nifty Private Bank
+NIFTY_PRIVATE_BANK = [
+    "AUBANK", "AXISBANK", "BANDHANBNK", "FEDERALBNK", "HDFCBANK",
+    "ICICIBANK", "IDFCFIRSTB", "INDUSINDBK", "KOTAKBANK", "RBLBANK"
+]
+
+# Nifty Financial Services
+NIFTY_FINANCIAL_SERVICES = [
+    "AXISBANK", "BAJFINANCE", "BAJAJFINSV", "CHOLAFIN", "HDFCAMC",
+    "HDFCBANK", "HDFCLIFE", "ICICIBANK", "ICICIGI", "ICICIPRULI",
+    "KOTAKBANK", "LICI", "MUTHOOTFIN", "PFC", "RECLTD",
+    "SBICARD", "SBILIFE", "SBIN", "SHRIRAMFIN"
+]
+
+# Nifty Consumer Durables
+NIFTY_CONSUMER_DURABLES = [
+    "AMBER", "BATAINDIA", "BLUESTAR", "CROMPTON", "DIXON",
+    "HAVELLS", "KAJARIACER", "ORIENTELEC", "RAJESHEXPO", "RELAXO",
+    "TITAN", "TTKPRESTIG", "VGUARD", "VOLTAS", "WHIRLPOOL"
+]
+
+# Nifty Infrastructure
+NIFTY_INFRA = [
+    "ADANIPORTS", "BHARTIARTL", "DLF", "GAIL", "GMRAIRPORT",
+    "IRB", "L&TFH", "LODHA", "LT", "NTPC",
+    "POWERGRID", "RECLTD", "RELIANCE", "SIEMENS", "TATAPOWER"
+]
+
+# ==================== ETFs ====================
+# Popular NSE ETFs (Exchange Traded Funds)
+NSE_ETFS = [
+    # Index ETFs - Nifty 50
+    "NIFTYBEES", "NETFNIF100", "ICICIN100", "UTINIFTETF", "LICNETFN50",
+    "HABORNNIF", "MABORNNIF", "NIPPONN50", "AXBAYEETF",
+    # Bank & Financial ETFs
+    "BANKBEES", "PSUBNKBEES", "PVTBANIETF", "FINIETF", "LICNFNHGP",
+    # IT ETFs
+    "ITBEES", "NIFTYIT", "IKITONICETF",
+    # Gold ETFs
+    "GOLDBEES", "GOLDSHARE", "KOTAKGOLD", "HABORNGOLD", "AXISGOLD", 
+    "ABORNGOLD", "LICGOLDETF", "SBISGOLD", "IDBIGOLD", "QGOLDHALF",
+    "NIPONGOLD",
+    # Silver ETFs
+    "SILVERBEES", "KOTAKSILVE", "SBISILVER", "AXISSILVER", "ABORSILVE",
+    "HABORSILVE", "SILVERBHRT", "NIPONSILVE",
+    # Liquid/Debt ETFs
+    "LIQUIDBEES", "LIQUIDETF", "LIQUIDADD", "LICMFET", "MONIFTY500",
+    # Nifty Next 50 ETFs
+    "JUNIORBEES", "NIFTY1", "LICNETFSEN", "HDFCNEXT50",
+    # Other Index ETFs
+    "NIFTYM50", "MIDCAPETF", "MOM100", "MOM50", "LOWVOLIETF",
+    "NIFTYVAL", "MAFANGBEES", "MOREALTY", "MOHEALTH", "SETFNN50",
+    "SETFNIF50", "MOVALUE", "PHARMABEES", "HEALTHIETF", "CONSUMBEES",
+    # International ETFs
+    "NASDAQ100", "MAFANG", "HANGSENG", "N100", "ABORNN100",
+    # Commodities
+    "CPSEETF", "MOGSEC", "MOIL", "INFRABEES",
+    # Thematic ETFs
+    "DIVOPPBEES", "EBBETF0425", "EBBETF0430", "EBBETF0431", "EBBETF0433",
+    "GSEC5IETF", "GSEC10YEAR", "GSECIETF", "HDFCNIFBAN", "HDFCNIFIT",
+    # Hybrid ETFs
+    "ALPHA", "ALPHAETF", "AUTOMIETF", "COMMOIETF", "EQUAL50"
+]
+
+# ==================== INDEX MAPPING ====================
+INDEX_STOCKS_MAP = {
+    "Nifty 50": NIFTY_50,
+    "Nifty Next 50": NIFTY_NEXT_50,
+    "Nifty 100": NIFTY_50 + NIFTY_NEXT_50,
+    "Nifty Midcap 100": NIFTY_MIDCAP_100,
+    "Nifty Smallcap 100": NIFTY_SMALLCAP_100,
+    "Bank Nifty": NIFTY_BANK,
+    "Nifty IT": NIFTY_IT,
+    "Nifty Pharma": NIFTY_PHARMA,
+    "Nifty Auto": NIFTY_AUTO,
+    "Nifty FMCG": NIFTY_FMCG,
+    "Nifty Energy": NIFTY_ENERGY,
+    "Nifty Metal": NIFTY_METAL,
+    "Nifty Realty": NIFTY_REALTY,
+    "Nifty PSU Bank": NIFTY_PSU_BANK,
+    "Nifty Media": NIFTY_MEDIA,
+    "Nifty Private Bank": NIFTY_PRIVATE_BANK,
+    "Nifty Financial Services": NIFTY_FINANCIAL_SERVICES,
+    "Nifty Consumer Durables": NIFTY_CONSUMER_DURABLES,
+    "Nifty Infrastructure": NIFTY_INFRA,
+    "NSE ETFs": NSE_ETFS,
+}
+
+
+def get_all_indices() -> list[str]:
+    """Get list of all available index names."""
+    return list(INDEX_STOCKS_MAP.keys())
+
+
+def get_stocks_by_index(index_name: str) -> list[str]:
+    """
+    Get stocks for a specific index.
+    
+    Args:
+        index_name: Name of the index
+    
+    Returns:
+        List of stock symbols
+    """
+    return INDEX_STOCKS_MAP.get(index_name, [])
+
+
+def get_all_nse_stocks() -> list[str]:
+    """
+    Get all unique NSE stocks from all indices.
+    
+    Returns:
+        List of unique stock symbols sorted alphabetically
+    """
+    all_stocks = set()
+    for stocks in INDEX_STOCKS_MAP.values():
+        all_stocks.update(stocks)
+    return sorted(list(all_stocks))
+
+
+def get_index_count(index_name: str) -> int:
+    """Get the count of stocks in an index."""
+    return len(INDEX_STOCKS_MAP.get(index_name, []))

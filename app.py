@@ -16,6 +16,12 @@ from stock_utils import (
     scan_stocks_for_dips,
     NIFTY_50_STOCKS
 )
+from nse_stocks import (
+    get_all_indices,
+    get_stocks_by_index,
+    get_all_nse_stocks,
+    get_index_count
+)
 
 # Page Configuration
 st.set_page_config(
@@ -250,28 +256,81 @@ with tab2:
     
     st.divider()
     
-    # Stock selection
-    col1, col2 = st.columns([3, 1])
+    # Index/Sector Selection
+    st.subheader("📊 Select Stock Universe")
+    
+    col1, col2 = st.columns([1, 1])
     
     with col1:
-        selected_stocks = st.multiselect(
-            "Select stocks to scan",
-            options=NIFTY_50_STOCKS,
-            default=NIFTY_50_STOCKS[:10],
-            help="Select stocks from Nifty 50 to scan for dip opportunities"
+        # Get all available indices plus "All NSE Stocks" and "Custom" options
+        index_options = ["Select an Index..."] + get_all_indices() + ["All NSE Stocks (~500+)"]
+        selected_index = st.selectbox(
+            "Choose Index/Sector",
+            options=index_options,
+            help="Select a predefined index or sector to scan"
         )
     
     with col2:
+        # Show stock count for selected index
+        if selected_index and selected_index not in ["Select an Index...", "All NSE Stocks (~500+)"]:
+            count = get_index_count(selected_index)
+            st.metric("Stocks in Index", count)
+        elif selected_index == "All NSE Stocks (~500+)":
+            st.metric("Stocks in Index", len(get_all_nse_stocks()))
+    
+    # Custom symbols input
+    st.markdown("---")
+    st.subheader("➕ Add Custom Symbols")
+    custom_symbols_input = st.text_area(
+        "Enter additional stock symbols (comma-separated)",
+        placeholder="E.g., ZOMATO, PAYTM, DELHIVERY, NYKAA",
+        help="Add any NSE stock symbols not in the selected index"
+    )
+    
+    # Process custom symbols
+    custom_symbols = []
+    if custom_symbols_input:
+        custom_symbols = [s.strip().upper() for s in custom_symbols_input.split(",") if s.strip()]
+    
+    # Combine stocks from index and custom
+    if selected_index == "All NSE Stocks (~500+)":
+        base_stocks = get_all_nse_stocks()
+    elif selected_index and selected_index != "Select an Index...":
+        base_stocks = get_stocks_by_index(selected_index)
+    else:
+        base_stocks = []
+    
+    # Merge and deduplicate
+    all_stocks_to_scan = list(set(base_stocks + custom_symbols))
+    all_stocks_to_scan.sort()
+    
+    # Display final stock list
+    st.markdown("---")
+    col1, col2, col3 = st.columns([2, 1, 1])
+    
+    with col1:
+        selected_stocks = st.multiselect(
+            "Stocks to scan (you can remove any)",
+            options=all_stocks_to_scan,
+            default=all_stocks_to_scan,
+            help="Final list of stocks to scan for dip opportunities"
+        )
+    
+    with col2:
+        st.metric("Total Stocks Selected", len(selected_stocks))
+    
+    with col3:
         st.write("")
         st.write("")
-        if st.button("📋 Select All Nifty 50", use_container_width=True):
-            st.session_state.selected_all = True
+        if st.button("📋 Select All", use_container_width=True, key="select_all_btn"):
+            selected_stocks = all_stocks_to_scan
             st.rerun()
     
-    # Handle select all
-    if 'selected_all' in st.session_state and st.session_state.selected_all:
-        selected_stocks = NIFTY_50_STOCKS
-        st.session_state.selected_all = False
+    # Warning for large scans
+    if len(selected_stocks) > 100:
+        st.warning(f"⚡ Scanning {len(selected_stocks)} stocks may take a few minutes. Please be patient.")
+    elif len(selected_stocks) > 50:
+        st.info(f"ℹ️ Scanning {len(selected_stocks)} stocks. This may take a moment.")
     
     scan_btn = st.button("🔍 Scan for Dips", type="primary", use_container_width=True)
     
@@ -346,9 +405,17 @@ with st.sidebar:
     st.markdown("""
     **NSE Stock Analyzer** helps you:
     
-    - 📊 Analyze individual NSE stocks
-    - 📈 View price history with SMAs
+    - 📊 Analyze any NSE stock
+    - 📈 View price charts with SMAs
     - 💰 Find "Buy the Dip" opportunities
+    
+    ---
+    
+    **Available Indices:**
+    - Nifty 50, Next 50, Midcap 100, Smallcap 100
+    - Bank Nifty, Nifty IT, Pharma, Auto
+    - FMCG, Energy, Metal, Realty, PSU Bank
+    - All NSE Stocks (500+)
     
     ---
     
@@ -360,9 +427,10 @@ with st.sidebar:
     
     **Buy the Dip Signals:**
     - RSI < 30 (Oversold)
-    - Price >5% below 20-SMA (with positive 200-SMA trend)
+    - Price >5% below 20-SMA
     """)
     
     st.divider()
     st.caption("Data source: Yahoo Finance via yfinance")
     st.caption("Made with ❤️ using Streamlit")
+
