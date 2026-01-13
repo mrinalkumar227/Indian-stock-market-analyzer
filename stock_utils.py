@@ -107,6 +107,132 @@ def get_stock_info(symbol: str) -> tuple[dict | None, str | None]:
         return None, f"Error fetching info for {symbol}: {str(e)}"
 
 
+def get_fundamental_data(symbol: str) -> tuple[dict | None, str | None]:
+    """
+    Get comprehensive fundamental data for a stock.
+    
+    Args:
+        symbol: Stock symbol (without .NS suffix)
+    
+    Returns:
+        Tuple of (fundamental data dictionary, error message if any)
+    """
+    try:
+        nse_symbol = f"{symbol.upper()}.NS"
+        ticker = yf.Ticker(nse_symbol)
+        info = ticker.info
+        
+        if not info:
+            return None, f"No fundamental data found for symbol: {symbol}"
+        
+        # Helper function to safely get values
+        def safe_get(key, default=None):
+            value = info.get(key, default)
+            return value if value is not None else default
+        
+        # Company Overview
+        company_overview = {
+            'name': safe_get('longName', safe_get('shortName', symbol.upper())),
+            'sector': safe_get('sector', 'N/A'),
+            'industry': safe_get('industry', 'N/A'),
+            'website': safe_get('website', ''),
+            'description': safe_get('longBusinessSummary', ''),
+            'employees': safe_get('fullTimeEmployees', None),
+            'country': safe_get('country', 'India'),
+            'currency': safe_get('currency', 'INR'),
+        }
+        
+        # Market Data & Valuation Metrics
+        valuation = {
+            'market_cap': safe_get('marketCap', None),
+            'enterprise_value': safe_get('enterpriseValue', None),
+            'trailing_pe': safe_get('trailingPE', None),
+            'forward_pe': safe_get('forwardPE', None),
+            'peg_ratio': safe_get('pegRatio', None),
+            'price_to_book': safe_get('priceToBook', None),
+            'price_to_sales': safe_get('priceToSalesTrailing12Months', None),
+            'ev_to_revenue': safe_get('enterpriseToRevenue', None),
+            'ev_to_ebitda': safe_get('enterpriseToEbitda', None),
+        }
+        
+        # Profitability Metrics
+        profitability = {
+            'profit_margin': safe_get('profitMargins', None),
+            'operating_margin': safe_get('operatingMargins', None),
+            'gross_margin': safe_get('grossMargins', None),
+            'ebitda_margin': safe_get('ebitdaMargins', None),
+            'return_on_equity': safe_get('returnOnEquity', None),
+            'return_on_assets': safe_get('returnOnAssets', None),
+        }
+        
+        # Per Share Data
+        per_share = {
+            'eps_trailing': safe_get('trailingEps', None),
+            'eps_forward': safe_get('forwardEps', None),
+            'book_value': safe_get('bookValue', None),
+            'revenue_per_share': safe_get('revenuePerShare', None),
+            'dividend_rate': safe_get('dividendRate', None),
+            'dividend_yield': safe_get('dividendYield', None),
+            'payout_ratio': safe_get('payoutRatio', None),
+            'five_year_avg_dividend_yield': safe_get('fiveYearAvgDividendYield', None),
+        }
+        
+        # Financial Health
+        financial_health = {
+            'total_cash': safe_get('totalCash', None),
+            'total_debt': safe_get('totalDebt', None),
+            'debt_to_equity': safe_get('debtToEquity', None),
+            'current_ratio': safe_get('currentRatio', None),
+            'quick_ratio': safe_get('quickRatio', None),
+            'free_cash_flow': safe_get('freeCashflow', None),
+            'operating_cash_flow': safe_get('operatingCashflow', None),
+        }
+        
+        # Income Statement Highlights
+        income = {
+            'total_revenue': safe_get('totalRevenue', None),
+            'revenue_growth': safe_get('revenueGrowth', None),
+            'gross_profit': safe_get('grossProfits', None),
+            'ebitda': safe_get('ebitda', None),
+            'net_income': safe_get('netIncomeToCommon', None),
+            'earnings_growth': safe_get('earningsGrowth', None),
+            'earnings_quarterly_growth': safe_get('earningsQuarterlyGrowth', None),
+        }
+        
+        # Growth Metrics
+        growth = {
+            'revenue_growth': safe_get('revenueGrowth', None),
+            'earnings_growth': safe_get('earningsGrowth', None),
+            'earnings_quarterly_growth': safe_get('earningsQuarterlyGrowth', None),
+        }
+        
+        # Analyst Recommendations
+        analyst = {
+            'target_high': safe_get('targetHighPrice', None),
+            'target_low': safe_get('targetLowPrice', None),
+            'target_mean': safe_get('targetMeanPrice', None),
+            'target_median': safe_get('targetMedianPrice', None),
+            'recommendation': safe_get('recommendationKey', None),
+            'recommendation_mean': safe_get('recommendationMean', None),
+            'num_analysts': safe_get('numberOfAnalystOpinions', None),
+        }
+        
+        return {
+            'symbol': symbol.upper(),
+            'company': company_overview,
+            'valuation': valuation,
+            'profitability': profitability,
+            'per_share': per_share,
+            'financial_health': financial_health,
+            'income': income,
+            'growth': growth,
+            'analyst': analyst,
+        }, None
+        
+    except Exception as e:
+        return None, f"Error fetching fundamental data for {symbol}: {str(e)}"
+
+
 def calculate_sma(data: pd.DataFrame, window: int) -> pd.Series:
     """
     Calculate Simple Moving Average.
