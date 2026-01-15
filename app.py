@@ -15,8 +15,11 @@ from stock_utils import (
     calculate_sma,
     calculate_rsi,
     scan_stocks_for_dips,
+    get_market_trend,
+    check_canslim_criteria,
     NIFTY_50_STOCKS
 )
+from ai_utils import train_intraday_model, predict_next_move
 from nse_stocks import (
     get_all_indices,
     get_stocks_by_index,
@@ -78,7 +81,7 @@ st.title("📈 NSE Stock Market Analyzer")
 st.markdown("*Analyze Indian stocks with technical indicators, fundamental analysis, and find Buy the Dip opportunities*")
 
 # Create tabs
-tab1, tab2, tab3 = st.tabs(["🔍 Stock Analyzer", "📊 Fundamental Analysis", "💰 Dip Finder"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["🔍 Stock Analyzer", "📊 Fundamental Analysis", "💰 Dip Finder", "🚀 CAN SLIM Strategy", "🤖 AI Intraday"])
 
 # ==================== TAB 1: STOCK ANALYZER ====================
 with tab1:
@@ -719,7 +722,322 @@ with tab3:
                 for err in errors:
                     st.error(f"{err['symbol']}: {err['reason']}")
 
+# ==================== TAB 4: CAN SLIM STRATEGY ====================
+with tab4:
+    st.header("🚀 CAN SLIM Trading Strategy")
+    st.markdown("*Identify high-growth stocks using William O'Neil's methodology adapted for Indian Markets*")
+    
+    # 1. Market Trend Section
+    st.subheader("1. 🌡️ Market Direction (The 'M')")
+    
+    with st.spinner("Analyzing Market Trend (Nifty 50)..."):
+        market_trend = get_market_trend()
+    
+    if market_trend['status'] == 'Error':
+        st.error(f"Could not analyze market trend: {market_trend['reason']}")
+    else:
+        trend_color = market_trend['color']
+        status = market_trend['status']
+        
+        # Color mapping for UI
+        color_map = {
+            "green": "#00c853", # Success
+            "orange": "#ffab00", # Warning
+            "red": "#ff1744",   # Error
+            "grey": "#9e9e9e"
+        }
+        
+        st.markdown(
+            f"""
+            <div style="padding: 15px; border-radius: 10px; border: 2px solid {color_map.get(trend_color, 'grey')}; background-color: rgba(0,0,0,0.2);">
+                <h3 style="margin:0; color: {color_map.get(trend_color, 'white')};">{status}</h3>
+                <p style="margin:5px 0 0 0;">{market_trend['reason']}</p>
+                <p style="font-size: 0.9em; color: #888;">Current Nifty: {market_trend.get('current_price', 0):,.0f} | 50 DMA: {market_trend.get('sma_50', 0):,.0f} | 200 DMA: {market_trend.get('sma_200', 0):,.0f}</p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        
+        if status == "Market in Correction":
+            st.warning("⚠️ Market is in correction. Determine strict sell rules and avoid aggressive buying.")
+    
+    st.divider()
+    
+    # 2. Screener Section
+    st.subheader("2. 🔍 Run CAN SLIM Screener")
+    st.markdown("Scan specific indices for stocks matching Growth, Momentum, and Sponsorship criteria.")
+    
+    # Screener Inputs
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        canslim_index = st.selectbox(
+            "Select Index to Scan",
+            options=["Nifty 50", "Nifty Next 50", "Nifty Midcap 100", "Nifty IT", "Nifty Bank"],
+            index=0,
+            key="canslim_index"
+        )
+    
+    with col2:
+        st.info("Note: Scanning involves fetching fundamental data which may take time. Limit to smaller indices for speed.")
+
+    if st.button("🚀 Run CAN SLIM Scan", type="primary"):
+        stocks_to_scan = get_stocks_by_index(canslim_index)
+        
+        # Limit scan for demo/performance if needed or just warn
+        if len(stocks_to_scan) > 50:
+            st.warning(f"Scanning {len(stocks_to_scan)} stocks. This might take 2-3 minutes due to API limits.")
+            
+        dataset = []
+        progress_bar = st.progress(0)
+        status_txt = st.empty()
+        
+        for i, symbol in enumerate(stocks_to_scan):
+            status_txt.text(f"Analyzing {symbol} ({i+1}/{len(stocks_to_scan)})...")
+            progress_bar.progress((i + 1) / len(stocks_to_scan))
+            
+            # Fetch data
+            # Optimization: We need history (1y) and fundamentals
+            hist_data, err1 = fetch_stock_data(symbol, period="1y")
+            fund_data, err2 = get_fundamental_data(symbol)
+            
+            if hist_data is not None and fund_data is not None:
+                # Run Logic
+                result = check_canslim_criteria(symbol, hist_data, fund_data)
+                
+                # Add to dataset
+                dataset.append({
+                    'Symbol': symbol,
+                    'Overall': result['Overall'],
+                    'Score': sum([1 for k in ['C', 'A', 'N', 'S', 'L', 'I'] if result[k]['pass']]),
+                    'C': "✅" if result['C']['pass'] else "❌",
+                    'A': "✅" if result['A']['pass'] else "❌",
+                    'N': "✅" if result['N']['pass'] else "❌",
+                    'S': "✅" if result['S']['pass'] else "❌",
+                    'L': "✅" if result['L']['pass'] else "❌",
+                    'I': "✅" if result['I']['pass'] else "❌",
+                    'Analysis': result
+                })
+        
+        progress_bar.empty()
+        status_txt.empty()
+        
+        # Display Results
+        if dataset:
+            df_res = pd.DataFrame(dataset)
+            
+            # Sort by Score (Desc)
+            df_res = df_res.sort_values(by='Score', ascending=False)
+            
+            st.success(f"Scan Complete! Found {len(df_res)} results.")
+            
+            # Filter Options
+            show_strong = st.checkbox("Show only Strong Candidates (Score >= 5)", value=True)
+            
+            if show_strong:
+                display_df = df_res[df_res['Score'] >= 5]
+            else:
+                display_df = df_res
+            
+            if display_df.empty:
+                st.warning("No stocks matched the high criteria. Try unchecking 'Show only Strong Candidates'.")
+            else:
+                # Summary Table
+                st.dataframe(
+                    display_df[['Symbol', 'Score', 'C', 'A', 'N', 'S', 'L', 'I']],
+                    use_container_width=True,
+                    hide_index=True
+                )
+                
+                # Report Cards (accordions)
+                st.subheader("📋 Detailed Analysis Cards")
+                for index, row in display_df.iterrows():
+                    analysis = row['Analysis']
+                    justification_md = "\n".join(analysis['Justification'])
+                    
+                    with st.expander(f"{row['Symbol']} (Score: {row['Score']}/6)"):
+                        st.markdown(justification_md)
+                        
+                        # Detailed Breakdown Grid
+                        g1, g2, g3 = st.columns(3)
+                        g1.markdown(f"**C (Current)**: {analysis['C']['reason']}")
+                        g1.markdown(f"**A (Annual)**: {analysis['A']['reason']}")
+                        g2.markdown(f"**N (New/Highs)**: {analysis['N']['reason']}")
+                        g2.markdown(f"**S (Supply)**: {analysis['S']['reason']}")
+                        g3.markdown(f"**L (Leader)**: {analysis['L']['reason']}")
+                        g3.markdown(f"**I (Institut.)**: {analysis['I']['reason']}")
+                        
+                        # Quick Chart
+                        if st.button(f"View Chart for {row['Symbol']}", key=f"btn_{row['Symbol']}"):
+                            # We can't jump to tab 1 easily, but we can show a mini chart here or update session state
+                            st.session_state['symbol_input'] = row['Symbol']
+                            st.info("Go to 'Stock Analyzer' tab to see full chart.")
+
+# ==================== TAB 5: AI INTRADAY PREDICTOR ====================
+with tab5:
+    st.header("🤖 AI Intraday Signal Generator")
+    st.markdown("*Machine Learning model (XGBoost) trained on live intraday data to predict the next candle direction.*")
+    
+    st.info("ℹ️ **How it works**: The model fetches recent 15-minute candles, calculates technical indicators (RSI, MACD, Returns), and trains a new model specifically for the selected stock to predict if the next close will be higher.")
+    
+    # Mode Selection
+    mode = st.radio("Select Mode", ["Single Stock Analysis", "Index Scanner 🚀"], horizontal=True)
+    
+    if mode == "Single Stock Analysis":
+        col1, col2 = st.columns([1, 2])
+        
+        with col1:
+            ai_symbol = st.text_input(
+                "Enter Stock Symbol for AI",
+                value="NIFTYBEES",
+                help="Enter NSE symbol (e.g., RELIANCE, TATASTEEL)"
+            ).upper().strip()
+            
+            run_ai_btn = st.button("🧠 Train & Predict", type="primary", use_container_width=True)
+            
+        with col2:
+            if run_ai_btn and ai_symbol:
+                with st.status(f"Processing {ai_symbol}...", expanded=True) as status:
+                    st.write("📥 Fetching intraday data (15m intervals)...")
+                    model, train_info, error = train_intraday_model(ai_symbol)
+                    
+                    if error:
+                        status.update(label="Error Occurred", state="error")
+                        st.error(error)
+                    else:
+                        st.write("⚙️ Training XGBoost Classifier...")
+                        acc = train_info['accuracy']
+                        st.write(f"✅ Training Complete (Validation Accuracy: {acc:.1%})")
+                        
+                        st.write("🔮 Generating Prediction...")
+                        last_data = train_info['last_data']
+                        feats = train_info['feature_cols']
+                        
+                        prob_up = predict_next_move(model, last_data, feats)
+                        status.update(label="Prediction Ready!", state="complete")
+                        
+                        # Display Result
+                        st.divider()
+                        prediction_col, conf_col = st.columns(2)
+                        
+                        is_bullish = prob_up > 0.5
+                        signal_text = "BULLISH 🟢" if is_bullish else "BEARISH 🔴"
+                        confidence = prob_up if is_bullish else (1 - prob_up)
+                        
+                        with prediction_col:
+                            st.metric("AI Signal (Next 15m)", signal_text)
+                        
+                        with conf_col:
+                            if confidence > 0.7:
+                                conf_msg = "Strong Confidence"
+                            elif confidence > 0.55:
+                                conf_msg = "Moderate Confidence"
+                            else:
+                                conf_msg = "Low Confidence (Uncertain)"
+                                
+                            st.metric("Probability", f"{confidence:.1%}", conf_msg)
+                        
+                        # Feature Importance Explanation
+                        st.subheader("Why this prediction?")
+                        # Simple rule-based explanation based on feature values
+                        reasons = []
+                        if last_data['RSI'] > 70: reasons.append(f"RSI is Overbought ({last_data['RSI']:.1f})")
+                        elif last_data['RSI'] < 30: reasons.append(f"RSI is Oversold ({last_data['RSI']:.1f})")
+                        
+                        if last_data['MACD'] > last_data['Signal_Line']: reasons.append("MACD is above Signal Line (Bullish Momentum)")
+                        else: reasons.append("MACD is below Signal Line (Bearish Momentum)")
+                        
+                        if last_data['Return_5'] > 0.02: reasons.append("Strong recent uptrend (+2% in 5 candles)")
+                        
+                        for r in reasons:
+                            st.write(f"- {r}")
+                        
+                        # Last Data View
+                        with st.expander("View Latest Features"):
+                            st.json(last_data)
+
+    else: # Index Scanner Mode
+        st.subheader("🚀 AI Market Scanner")
+        
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            scan_index = st.selectbox(
+                "Select Index to Scan", 
+                ["Nifty 50", "Nifty Bank", "Nifty IT", "Nifty Auto"]
+            )
+        
+        with col2:
+            st.warning("⚠️ Scanning takes time! Training ~50 ML models on the fly takes about 1-2 minutes.")
+            
+        if st.button("🚀 Start AI Scan", type="primary"):
+            stock_list = get_stocks_by_index(scan_index)
+            
+            # Limit for demo speed if needed, but user wants full scan
+            # stock_list = stock_list[:10] 
+            
+            results = []
+            progress_bar = st.progress(0)
+            status_txt = st.empty()
+            
+            error_count = 0
+            
+            for i, symbol in enumerate(stock_list):
+                status_txt.text(f"Training AI model for {symbol} ({i+1}/{len(stock_list)})...")
+                progress_bar.progress((i + 1) / len(stock_list))
+                
+                model, train_info, error = train_intraday_model(symbol)
+                
+                if not error:
+                    prob_up = predict_next_move(model, train_info['last_data'], train_info['feature_cols'])
+                    confidence = prob_up if prob_up > 0.5 else (1 - prob_up)
+                    
+                    results.append({
+                        'Symbol': symbol,
+                        'Signal': "Bullish 🟢" if prob_up > 0.5 else "Bearish 🔴",
+                        'Probability': prob_up,
+                        'Confidence': confidence,
+                        'Accuracy': train_info['accuracy']
+                    })
+                else:
+                    error_count += 1
+            
+            progress_bar.empty()
+            status_txt.empty()
+            
+            if results:
+                df_scan = pd.DataFrame(results)
+                
+                # Filter for High Confidence only?
+                st.success(f"Scan Complete! Successfully analyzed {len(results)} stocks.")
+                
+                st.subheader("🔥 Top AI Picks (High Confidence)")
+                
+                # Sort by Confidence
+                df_scan = df_scan.sort_values(by='Confidence', ascending=False)
+                
+                # Display High Confidence (>60%)
+                high_conf = df_scan[df_scan['Confidence'] > 0.60]
+                
+                if not high_conf.empty:
+                    st.dataframe(
+                        high_conf.style.format({'Probability': '{:.1%}', 'Confidence': '{:.1%}', 'Accuracy': '{:.1%}'}),
+                        use_container_width=True,
+                        hide_index=True
+                    )
+                else:
+                    st.info("No high-confidence signals (>60%) found right now.")
+                    
+                with st.expander("View All Results"):
+                     st.dataframe(
+                        df_scan.style.format({'Probability': '{:.1%}', 'Confidence': '{:.1%}', 'Accuracy': '{:.1%}'}),
+                        use_container_width=True,
+                        hide_index=True
+                    )
+            else:
+                st.error("No results generated. Likely data fetching errors.")
+
 # Sidebar info
+
+
 with st.sidebar:
     st.header("ℹ️ About")
     st.markdown("""

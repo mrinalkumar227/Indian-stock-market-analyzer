@@ -367,3 +367,212 @@ def scan_stocks_for_dips(stocks: list[str], progress_callback=None) -> list[dict
         results.append(signal_info)
     
     return results
+
+
+def get_market_trend() -> dict:
+    """
+    Determine the current market trend based on Nifty 50.
+    
+    Returns:
+        Dictionary with trend status and details.
+    """
+    try:
+        # Fetch Nifty 50 data
+        nifty = yf.Ticker("^NSEI")
+        hist = nifty.history(period="1y")
+        
+        if hist.empty:
+            return {'status': 'Unknown', 'color': 'grey', 'reason': 'Data unavailable'}
+        
+        # Calculate SMAs
+        hist['SMA_50'] = hist['Close'].rolling(window=50).mean()
+        hist['SMA_200'] = hist['Close'].rolling(window=200).mean()
+        
+        current_close = hist['Close'].iloc[-1]
+        sma_50 = hist['SMA_50'].iloc[-1]
+        sma_200 = hist['SMA_200'].iloc[-1]
+        
+        # Determine Trend
+        if current_close > sma_200 and sma_50 > sma_200:
+            status = "Uptrend"
+            color = "green"
+            reason = "Market is in a Confirmed Uptrend (Price > 200 DMA & 50 > 200)"
+        elif current_close > sma_200:
+            status = "Uptrend Under Pressure"
+            color = "orange"
+            reason = "Price above 200 DMA but momentum weakening"
+        else:
+            status = "Market in Correction"
+            color = "red"
+            reason = "Market is in a Downtrend (Price < 200 DMA)"
+            
+        return {
+            'status': status,
+            'color': color,
+            'reason': reason,
+            'current_price': current_close,
+            'sma_50': sma_50,
+            'sma_200': sma_200
+        }
+    except Exception as e:
+        return {'status': 'Error', 'color': 'grey', 'reason': str(e)}
+
+
+def calculate_rs_rating(stock_data: pd.DataFrame, benchmark_data: pd.DataFrame = None) -> float:
+    """
+    Calculate a simplified Relative Strength Rating.
+    Compares stock performance vs Benchmark (Nifty 50) over 12 months.
+    
+    Returns:
+        Float representing excess return vs benchmark.
+    """
+    if len(stock_data) < 250: # Need approx 1 year data
+        return 0.0
+        
+    # If no benchmark provided, just return raw 1-yr return
+    if benchmark_data is None or benchmark_data.empty:
+        start_price = stock_data['Close'].iloc[0]
+        end_price = stock_data['Close'].iloc[-1]
+        return ((end_price - start_price) / start_price) * 100
+
+    # Calculate Stock Return
+    s_start = stock_data['Close'].iloc[0]
+    s_end = stock_data['Close'].iloc[-1]
+    stock_ret = ((s_end - s_start) / s_start) * 100
+    
+    # Calculate Benchmark Return (align dates roughly)
+    b_start = benchmark_data['Close'].iloc[0]
+    b_end = benchmark_data['Close'].iloc[-1]
+    bench_ret = ((b_end - b_start) / b_start) * 100
+    
+    # RS Rating (Excess Return)
+    return stock_ret - bench_ret
+
+
+def check_canslim_criteria(symbol: str, data: pd.DataFrame, fundamentals: dict) -> dict:
+    """
+    Check CAN SLIM criteria for a stock and provide justification.
+    
+    Args:
+        symbol: Stock symbol
+        data: Historical price data (1y)
+        fundamentals: Fundamental data dictionary (from get_fundamental_data)
+        
+    Returns:
+        Dictionary with pass/fail status and detailed justification.
+    """
+    criteria = {
+        'C': {'pass': False, 'reason': ''},
+        'A': {'pass': False, 'reason': ''},
+        'N': {'pass': False, 'reason': ''},
+        'S': {'pass': False, 'reason': ''},
+        'L': {'pass': False, 'reason': ''},
+        'I': {'pass': False, 'reason': ''},
+        'Overall': False,
+        'Justification': []
+    }
+    
+    if data is None or fundamentals is None:
+        criteria['Justification'].append("Insufficient data for analysis")
+        return criteria
+
+    # --- C: Current Earnings ---
+    # Look for quarterly growth > 20%
+    growth = fundamentals.get('growth', {})
+    qtr_growth = growth.get('earnings_quarterly_growth')
+    
+    if qtr_growth and qtr_growth > 0.20:
+        criteria['C']['pass'] = True
+        criteria['C']['reason'] = f"Strong Qtr EPS Growth: {qtr_growth*100:.1f}% (>20%)"
+    else:
+        val = f"{qtr_growth*100:.1f}%" if qtr_growth else "N/A"
+        criteria['C']['reason'] = f"Weak Qtr EPS Growth: {val} (<20%)"
+
+    # --- A: Annual Earnings ---
+    # Look for annual earnings growth > 20%
+    ann_growth = growth.get('earnings_growth')
+    roe = fundamentals.get('profitability', {}).get('return_on_equity')
+    
+    if (ann_growth and ann_growth > 0.15) or (roe and roe > 0.17):
+        criteria['A']['pass'] = True
+        criteria['A']['reason'] = f"Solid Annual Growth: {ann_growth*100 if ann_growth else 0:.1f}% or ROE: {roe*100 if roe else 0:.1f}%"
+    else:
+        criteria['A']['reason'] = "Annual Growth/ROE below targets (>15% / >17%)"
+
+    # --- N: New Highs / Catalysts ---
+    # Price near 52-week high (< 15% below)
+    current_price = data['Close'].iloc[-1]
+    high_52 = data['High'].max()
+    dist_from_high = ((high_52 - current_price) / high_52) * 100
+    
+    if dist_from_high < 15:
+        criteria['N']['pass'] = True
+        criteria['N']['reason'] = f"Price near 52W High ({dist_from_high:.1f}% below)"
+    else:
+        criteria['N']['reason'] = f"Price >15% below 52W High ({dist_from_high:.1f}%)"
+
+    # --- S: Supply & Demand ---
+    # Volume check > 5 Cr daily value (approx) to ensure liquidity
+    # And ideally rising volume on up days
+    avg_vol = data['Volume'].tail(20).mean()
+    avg_price = data['Close'].tail(20).mean()
+    avg_turnover = avg_vol * avg_price
+    
+    if avg_turnover > 50_000_000: # 5 Crores
+        criteria['S']['pass'] = True
+        criteria['S']['reason'] = f"Liquid: Avg Daily Turnover ₹{avg_turnover/1e7:.1f}Cr"
+    else:
+        criteria['S']['reason'] = f"Illiquid: Avg Turnover ₹{avg_turnover/1e7:.1f}Cr (<5Cr)"
+
+    # --- L: Leader (Relative Strength) ---
+    # 1 Year Performance vs Market
+    # Ideally should pass if stock return > 20% in last year or outperforms index
+    start_price = data['Close'].iloc[0]
+    stock_ret = ((current_price - start_price) / start_price)
+    
+    if stock_ret > 0.20: # Absolute return > 20%
+        criteria['L']['pass'] = True
+        criteria['L']['reason'] = f"Relative Strength Leader: +{stock_ret*100:.1f}% in 1yr"
+    elif stock_ret > 0:
+        criteria['L']['reason'] = f"Positive but weak Returns: +{stock_ret*100:.1f}%"
+    else:
+        criteria['L']['reason'] = f"Laggard: {stock_ret*100:.1f}% return"
+
+    # --- I: Institutional Sponsorship ---
+    # Hard to get real-time FII data via yfinance free API
+    # We check if 'heldPercentInstitutions' exists
+    inst_hold = fundamentals.get('major_holders', {}).get('heldPercentInstitutions') # This key might not exist in our struct
+    # Fallback: Check if Market Cap is decent (> 2000 Cr) implying inst interest
+    mkt_cap = fundamentals.get('valuation', {}).get('market_cap', 0)
+    
+    if mkt_cap and mkt_cap > 20_000_000_000: # 2000 Cr
+        criteria['I']['pass'] = True
+        criteria['I']['reason'] = f"Inst. Base Likely (Large Cap: ₹{mkt_cap/1e9:.1f}B)"
+    else:
+         criteria['I']['reason'] = "Small Cap / Unknown Inst. Sponsorship"
+
+    # --- Calculate Justification ---
+    # We advocate for the trade if C, A, N, and L are strong (The Core)
+    score = sum([1 for k in ['C', 'A', 'N', 'S', 'L', 'I'] if criteria[k]['pass']])
+    
+    justification = []
+    if score >= 5:
+        criteria['Overall'] = True
+        justification.append(f"🔥 **STRONG BUY CANDIDATE** ({score}/6 Criteria)")
+        justification.append("Details:")
+        justification.append(f"- ✅ **Earnings**: {criteria['C']['reason']}")
+        justification.append(f"- ✅ **Trend**: {criteria['N']['reason']} & {criteria['L']['reason']}")
+    elif score >= 3:
+        criteria['Overall'] = False # Strict CAN SLIM needs more
+        justification.append(f"⚠️ **WATCHLIST CANDIDATE** ({score}/6 Criteria)")
+        justification.append("Missing some key criteria:")
+        if not criteria['C']['pass']: justification.append(f"- ❌ **Earnings**: {criteria['C']['reason']}")
+        if not criteria['N']['pass']: justification.append(f"- ❌ **Trend**: {criteria['N']['reason']}")
+    else:
+        criteria['Overall'] = False
+        justification.append(f"⛔ **AVOID** ({score}/6 Criteria)")
+        justification.append(f"- Weak Technicals/Fundamentals.")
+
+    criteria['Justification'] = justification
+    
+    return criteria
